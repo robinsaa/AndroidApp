@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "481449454870",
+    "firebase_url": "https://cuplogin-697e9.firebaseio.com",
+    "project_id": "cuplogin-697e9",
+    "storage_bucket": "cuplogin-697e9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:481449454870:android:5253b52833dc7da1cbf437",
+        "android_client_info": {
+          "package_name": "com.example.cuplogin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "481449454870-a7ljl5thfo3euf0l7kph1nkrq4smpdi4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.cuplogin",
+            "certificate_hash": "7be28cd7d239868810a312f6c955c2117396fffd"
+          }
+        },
+        {
+          "client_id": "481449454870-pkqn4qrntqig6v29sk7u1htsjv2fg15h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArbprC3oY-Jchlq396lYz8khJte6wRyZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "481449454870-pkqn4qrntqig6v29sk7u1htsjv2fg15h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
