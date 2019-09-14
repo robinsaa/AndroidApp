@@ -19,12 +19,15 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.HashMap;
+import java.util.Objects;
+
 public class SignupActivity extends AppCompatActivity {
 
     EditText emailET,passwordET,usernameET;
     Button registerBtn;
     FirebaseAuth firebaseAuth;
-    DatabaseReference firebaseRef;
+    DatabaseReference firebaseRef,firebaseUserRef;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -39,15 +42,15 @@ public class SignupActivity extends AppCompatActivity {
 
 
         firebaseRef = FirebaseDatabase.getInstance().getReference();
-
+        firebaseUserRef = FirebaseDatabase.getInstance().getReference();
         firebaseAuth = FirebaseAuth.getInstance();
 
         registerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email = emailET.getText().toString();
+                final String email = emailET.getText().toString();
                 String password = passwordET.getText().toString();
-                String username  = usernameET.getText().toString();
+                final String username  = usernameET.getText().toString();
 
                 if (TextUtils.isEmpty(email)) {
                     Toast.makeText(getApplicationContext(), "Please fill in the required fields", Toast.LENGTH_SHORT).show();
@@ -71,6 +74,27 @@ public class SignupActivity extends AppCompatActivity {
                             public void onComplete(@NonNull Task<AuthResult> task) {
                                 if (task.isSuccessful()) {
                                     firebaseRef.child("user_ids").child(usernameET.getText().toString()).setValue(emailET.getText().toString());
+                                    HashMap userData = new HashMap();
+                                    userData.put("email", email);
+                                    userData.put("cafe-id", username);
+                                    if (firebaseAuth.getCurrentUser() != null) {
+
+                                        firebaseUserRef.child(firebaseAuth.getCurrentUser().getUid()).updateChildren(userData).addOnCompleteListener(new OnCompleteListener() {
+                                            @Override
+                                            public void onComplete(@NonNull Task task) {
+
+                                                if (task.isSuccessful()) {
+
+                                                    Toast.makeText(SignupActivity.this, "Saved details", Toast.LENGTH_LONG).show();
+
+                                                } else {
+                                                    Toast.makeText(SignupActivity.this, "Error sending data" , Toast.LENGTH_SHORT).show();
+                                                }
+
+                                            }
+                                        });
+
+                                    }
                                     Toast.makeText(getBaseContext(),"You are successfully registered ",Toast.LENGTH_SHORT).show();
                                     startActivity(new Intent(getApplicationContext(), LoginActivity.class));
                                     finish();
