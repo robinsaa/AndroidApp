@@ -18,7 +18,8 @@ import com.google.firebase.database.FirebaseDatabase;
 public class MainActivity extends AppCompatActivity {
 
     TextView userStatusTV;
-    Button logoutBtn;
+    Button logoutBtn,barcodeScanBtn;
+
     DatabaseReference firebaseRef;
     String username = "default";
 
@@ -27,6 +28,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         logoutBtn = (Button) findViewById(R.id.logOutBtn);
+        barcodeScanBtn = (Button) findViewById(R.id.scanBarcodeBtn);
         userStatusTV = (TextView) findViewById(R.id.userStatus);
         firebaseRef = FirebaseDatabase.getInstance().getReference();
         Intent receivedIntent = getIntent();
@@ -54,6 +56,14 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 FirebaseAuth.getInstance().signOut();
                 Intent I = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(I);
+            }
+        });
+
+        barcodeScanBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent I = new Intent(MainActivity.this, BarcodeScanActivity.class);
                 startActivity(I);
             }
         });
