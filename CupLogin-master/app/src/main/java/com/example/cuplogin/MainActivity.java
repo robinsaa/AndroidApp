@@ -1,7 +1,9 @@
 package com.example.cuplogin;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.PersistableBundle;
@@ -9,17 +11,25 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.example.cuplogin.Database.AppDatabase;
+import com.example.cuplogin.Database.Sale;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
-    TextView userStatusTV;
-    Button logoutBtn,barcodeScanBtn;
-
+    TextView userStatusTV,dbContent;
+    Button logoutBtn,barcodeScanBtn,showDbButton;
+    List<Sale> mSales = new ArrayList<>();
     DatabaseReference firebaseRef;
     String username = "default";
 
@@ -30,6 +40,12 @@ public class MainActivity extends AppCompatActivity {
         logoutBtn = (Button) findViewById(R.id.logOutBtn);
         barcodeScanBtn = (Button) findViewById(R.id.scanBarcodeBtn);
         userStatusTV = (TextView) findViewById(R.id.userStatus);
+        dbContent = (TextView) findViewById(R.id.dbContent);
+        showDbButton = findViewById(R.id.viewDbBtn);
+
+        final AppDatabase mDb = Room.databaseBuilder(getApplicationContext(),
+                AppDatabase.class, "salesDb").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        
         firebaseRef = FirebaseDatabase.getInstance().getReference();
         Intent receivedIntent = getIntent();
         if(receivedIntent != null)
@@ -50,6 +66,24 @@ public class MainActivity extends AppCompatActivity {
             // No user is signed in
             userStatusTV.setText("Error Loading Profile");
         }
+
+
+
+        showDbButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSales= mDb.saleDao().getAll();
+                if (mSales.size() != 0) {
+
+                    String text = "";
+                    for (Sale sale : mSales ){
+                        text += sale.getCafeId() +  ", " + sale.getCupId() +", "+ sale.getTimestamp()+"\n";
+                    }
+                    dbContent.setText(text);
+
+                }
+            }
+        });
 
         logoutBtn.setOnClickListener(new View.OnClickListener() {
             @Override

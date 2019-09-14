@@ -3,8 +3,10 @@ package com.example.cuplogin;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.room.Room;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -15,12 +17,18 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
 
+import com.example.cuplogin.Database.AppDatabase;
+import com.example.cuplogin.Database.Sale;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class BarcodeScanActivity extends AppCompatActivity {
 
@@ -29,6 +37,8 @@ public class BarcodeScanActivity extends AppCompatActivity {
     SurfaceView surfaceView;
     BarcodeDetector barcodeDetector;
     final int REQUEST_CAMERA_PERMISSION_ID = 1001;
+    boolean MOVED_TO_DATABASE = false;
+    private AppDatabase mDb;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -56,14 +66,21 @@ public class BarcodeScanActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_barcode_scan);
 
-        barcodeValueTV = (TextView) findViewById(R.id.barcodeValueTV);
-        surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
+        barcodeValueTV = findViewById(R.id.barcodeValueTV);
+        surfaceView = findViewById(R.id.surfaceView);
+
+        mDb = Room.databaseBuilder(getApplicationContext(),
+                AppDatabase.class, "salesDb").allowMainThreadQueries().fallbackToDestructiveMigration().build();
 
         barcodeDetector = new BarcodeDetector.Builder(this)
                 .setBarcodeFormats(Barcode.QR_CODE).build();
 
         cameraSource = new CameraSource.Builder(this, barcodeDetector)
+                .setFacing(CameraSource.CAMERA_FACING_BACK)
+                .setRequestedFps(24)
+                .setAutoFocusEnabled(true)
                 .setRequestedPreviewSize(640, 480).build();
+
 
 
         surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -107,18 +124,46 @@ public class BarcodeScanActivity extends AppCompatActivity {
 
                 if(qrCodes.size() != 0)
                 {
-                    barcodeValueTV.post(new Runnable() {
+
+                    runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
                             vibrator.vibrate(1000);
                             barcodeValueTV.setText(qrCodes.valueAt(0).displayValue);
+                            if(!MOVED_TO_DATABASE){
+                                saveToDB(barcodeValueTV.getText().toString());
+                            }
                         }
                     });
+
+
 
                 }
 
             }
         });
     }
+
+    private void saveToDB(String barcodeValue) {
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String millisInString  = dateFormat.format(new Date());
+        int size = getDatabseCount();
+        mDb.saleDao().insert(new Sale(size+1,"101",barcodeValue,millisInString));
+        MOVED_TO_DATABASE =true;
+        finish();
+    }
+
+    private int getDatabseCount() {
+        List<Sale> mSales = mDb.saleDao().getAll();
+        if(mSales.size() > 0)
+        {
+            return mSales.size();
+        }
+        else {
+            return 0;
+        }
+    }
+
+
 }
