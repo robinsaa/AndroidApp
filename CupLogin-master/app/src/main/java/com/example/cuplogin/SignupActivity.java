@@ -77,6 +77,8 @@ public class SignupActivity extends AppCompatActivity {
                                     HashMap userData = new HashMap();
                                     userData.put("email", email);
                                     userData.put("cafe-id", username);
+                                    userData.put("user-role", "user");
+
                                     if (firebaseAuth.getCurrentUser() != null) {
 
                                         firebaseUserRef.child(firebaseAuth.getCurrentUser().getUid()).updateChildren(userData).addOnCompleteListener(new OnCompleteListener() {

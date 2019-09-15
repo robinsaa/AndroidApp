@@ -1,5 +1,6 @@
 package com.example.cuplogin;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
@@ -17,8 +18,11 @@ import com.example.cuplogin.Database.AppDatabase;
 import com.example.cuplogin.Database.Sale;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,6 +36,10 @@ public class MainActivity extends AppCompatActivity {
     List<Sale> mSales = new ArrayList<>();
     DatabaseReference firebaseRef;
     String username = "default";
+    String UID = null;
+
+    FirebaseAuth firebaseAuth;
+    DatabaseReference mUserRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,27 +53,43 @@ public class MainActivity extends AppCompatActivity {
 
         final AppDatabase mDb = Room.databaseBuilder(getApplicationContext(),
                 AppDatabase.class, "salesDb").allowMainThreadQueries().fallbackToDestructiveMigration().build();
-        
+        firebaseAuth = FirebaseAuth.getInstance();
         firebaseRef = FirebaseDatabase.getInstance().getReference();
-        Intent receivedIntent = getIntent();
-        if(receivedIntent != null)
-        {
-            username = receivedIntent.getStringExtra("username");
+
+
+        if (firebaseAuth.getCurrentUser() != null) {
+            UID = firebaseAuth.getCurrentUser().getUid();
+
+            mUserRef = firebaseRef.child(UID);
+            mUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot)
+                {
+                    if(dataSnapshot.exists())
+                    {
+                        if(dataSnapshot.hasChild("cafe-id"))
+                        {
+                            username = dataSnapshot.child("cafe-id").getValue(String.class);
+                            if (username != null) {
+                                userStatusTV.setText("Hi User, " + username);
+                            } else {
+                                // No user is signed in
+                                userStatusTV.setText("Error Loading Profile");
+                            }
+
+                        }
+
+                    }
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+
         }
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (user != null) {
-            // User is signed in
-            String email = user.getUid();
-            if(email != null)
-            {
-                userStatusTV.setText("Hi User, " + user.getEmail());
-            }
-        } else {
-            // No user is signed in
-            userStatusTV.setText("Error Loading Profile");
-        }
 
 
 
