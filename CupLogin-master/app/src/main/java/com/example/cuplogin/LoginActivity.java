@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -39,6 +40,8 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         loginEmail = (EditText) findViewById(R.id.loginEmail);
+        loginEmail.setInputType(InputType.TYPE_CLASS_TEXT);
+
         loginPassword = (EditText) findViewById(R.id.loginPassword);
         loginBtn = (Button) findViewById(R.id.login_btn);
         //signupBtnLink = (Button) findViewById(R.id.signup_link_btn);
@@ -137,6 +140,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
     }
+
+
 
 
 }

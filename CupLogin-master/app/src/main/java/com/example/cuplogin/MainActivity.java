@@ -2,6 +2,7 @@ package com.example.cuplogin;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.room.Room;
 
 import android.annotation.SuppressLint;
@@ -9,6 +10,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -16,6 +20,7 @@ import android.widget.Toast;
 
 import com.example.cuplogin.Database.AppDatabase;
 import com.example.cuplogin.Database.Sale;
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -31,13 +36,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView userStatusTV,dbContent;
-    Button logoutBtn,barcodeScanBtn,showDbButton;
-    List<Sale> mSales = new ArrayList<>();
+    //Variables
+    TextView userStatusTV;
+    Button barcodeScanBtn;
     DatabaseReference firebaseRef;
     String username = "default";
     String UID = null;
-
+    Toolbar toolbar;
     FirebaseAuth firebaseAuth;
     DatabaseReference mUserRef;
 
@@ -45,17 +50,17 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        logoutBtn = (Button) findViewById(R.id.logOutBtn);
+
+        //Setup UI Elements
         barcodeScanBtn = (Button) findViewById(R.id.scanBarcodeBtn);
         userStatusTV = (TextView) findViewById(R.id.userStatus);
-        dbContent = (TextView) findViewById(R.id.dbContent);
-        showDbButton = findViewById(R.id.viewDbBtn);
+        toolbar = (Toolbar) findViewById(R.id.my_toolbar);
+        setSupportActionBar(toolbar);
+        toolbar.setTitleTextColor(getResources().getColor(R.color.white));
 
-        final AppDatabase mDb = Room.databaseBuilder(getApplicationContext(),
-                AppDatabase.class, "salesDb").allowMainThreadQueries().fallbackToDestructiveMigration().build();
+        //Handle authentication
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseRef = FirebaseDatabase.getInstance().getReference();
-
 
         if (firebaseAuth.getCurrentUser() != null) {
             UID = firebaseAuth.getCurrentUser().getUid();
@@ -71,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                         {
                             username = dataSnapshot.child("cafe-id").getValue(String.class);
                             if (username != null) {
-                                userStatusTV.setText("Hi User, " + username);
+                                userStatusTV.setText("Hi " + username);
                             } else {
                                 // No user is signed in
                                 userStatusTV.setText("Error Loading Profile");
@@ -91,33 +96,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-
-        showDbButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mSales= mDb.saleDao().getAll();
-                if (mSales.size() != 0) {
-
-                    String text = "";
-                    for (Sale sale : mSales ){
-                        text += sale.getCafeId() +  ", " + sale.getCupId() +", "+ sale.getTimestamp()+"\n";
-                    }
-                    dbContent.setText(text);
-
-                }
-            }
-        });
-
-        logoutBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                FirebaseAuth.getInstance().signOut();
-                Intent I = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(I);
-            }
-        });
-
         barcodeScanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,8 +106,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.logout:
+                logOut();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("userName", username);
     }
+
+    private void logOut(){
+        FirebaseAuth.getInstance().signOut();
+        Intent I = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(I);
+    }
+
+
 }
