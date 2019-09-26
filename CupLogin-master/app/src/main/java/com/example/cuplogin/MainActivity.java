@@ -46,10 +46,12 @@ public class MainActivity extends AppCompatActivity {
     FirebaseAuth firebaseAuth;
     DatabaseReference mUserRef;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         //Setup UI Elements
         barcodeScanBtn = (Button) findViewById(R.id.scanBarcodeBtn);
@@ -119,6 +121,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.logout:
                 logOut();
                 return true;
+            case R.id.showdb:
+                Intent I = new Intent(MainActivity.this, ShowDatabaseActivity.class);
+                startActivity(I);
+                return true;
+
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -132,9 +140,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void logOut(){
         FirebaseAuth.getInstance().signOut();
+        finish();
         Intent I = new Intent(MainActivity.this, LoginActivity.class);
         startActivity(I);
+
     }
+
+
 
 
 }

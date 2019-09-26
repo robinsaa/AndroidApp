@@ -16,6 +16,7 @@ import android.util.SparseArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.cuplogin.Database.AppDatabase;
 import com.example.cuplogin.Database.Sale;
@@ -130,6 +131,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
                         public void run() {
                             Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
                             vibrator.vibrate(1000);
+
                             barcodeValueTV.setText(qrCodes.valueAt(0).displayValue);
                             if(!MOVED_TO_DATABASE){
                                 saveToDB(barcodeValueTV.getText().toString());
@@ -151,7 +153,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
         int size = getDatabseCount();
         mDb.saleDao().insert(new Sale(size+1,"101",barcodeValue,millisInString));
         MOVED_TO_DATABASE =true;
-        finish();
+        Toast.makeText(getApplicationContext(),"Recorded Cup Details!",Toast.LENGTH_SHORT).show();
     }
 
     private int getDatabseCount() {
