@@ -11,10 +11,10 @@ public class Sale {
     public int sid;
 
     @ColumnInfo(name = "cafe_id")
-    public Integer cafeId;
+    public String cafeId;
 
     @ColumnInfo(name = "cup_id")
-    public Integer cupId;
+    public String cupId;
 
     @ColumnInfo(name = "timestamp")
     public String timestamp;
@@ -25,11 +25,11 @@ public class Sale {
         return sid;
     }
 
-    public Integer getCafeId() {
+    public String getCafeId() {
         return cafeId;
     }
 
-    public Integer getCupId() {
+    public String getCupId() {
         return cupId;
     }
 
@@ -37,7 +37,7 @@ public class Sale {
         return timestamp;
     }
 
-    public Sale(int sid, Integer cafeId, Integer cupId, String timestamp) {
+    public Sale(int sid, String cafeId, String cupId, String timestamp) {
         this.sid = sid;
         this.cafeId = cafeId;
         this.cupId = cupId;

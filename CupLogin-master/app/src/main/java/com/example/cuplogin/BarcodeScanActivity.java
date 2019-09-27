@@ -151,7 +151,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String millisInString  = dateFormat.format(new Date());
         int size = getDatabseCount();
-        mDb.saleDao().insert(new Sale(size+1,101,barcodeValue,millisInString));
+        mDb.saleDao().insert(new Sale(size+1,"101",barcodeValue,millisInString));
         MOVED_TO_DATABASE =true;
         Toast.makeText(getApplicationContext(),"Recorded Cup Details!",Toast.LENGTH_SHORT).show();
     }

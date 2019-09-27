@@ -1,11 +1,11 @@
-package com.example.cuplogin;
+package com.example.cuplogin.Api;
 
 
 public class ApiUtils {
 
     private ApiUtils() {}
 
-    public static final String BASE_URL = "***REMOVED***sale/";
+    public static final String BASE_URL = "***REMOVED***";
 
     public static APIService getAPIService() {
 

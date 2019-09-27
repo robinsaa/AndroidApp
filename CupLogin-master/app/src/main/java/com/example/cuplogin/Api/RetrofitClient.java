@@ -1,4 +1,4 @@
-package com.example.cuplogin;
+package com.example.cuplogin.Api;
 
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
