@@ -7,6 +7,7 @@ import androidx.room.Room;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.util.Log;
@@ -40,17 +41,23 @@ public class MainActivity extends AppCompatActivity {
     TextView userStatusTV;
     Button barcodeScanBtn;
     DatabaseReference firebaseRef;
-    String username = "default";
+    String username = "User";
+    String cafeId = "0";
+
     String UID = null;
     Toolbar toolbar;
     FirebaseAuth firebaseAuth;
     DatabaseReference mUserRef;
-
+    SharedPreferences mUserPref;
+    SharedPreferences.Editor mPrefEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        mUserPref = getApplicationContext().getSharedPreferences("BorrowCupPref", 0);
+        mPrefEditor = mUserPref.edit();
 
 
         //Setup UI Elements
@@ -76,9 +83,14 @@ public class MainActivity extends AppCompatActivity {
                     {
                         if(dataSnapshot.hasChild("cafe-id"))
                         {
-                            username = dataSnapshot.child("cafe-id").getValue(String.class);
+                            String cafeId = dataSnapshot.child("cafe-id").getValue(String.class);
+                            mPrefEditor.putString("cafe_id", cafeId);
+                            mPrefEditor.apply();
+
+                            username = dataSnapshot.child("uname").getValue(String.class);
                             if (username != null) {
-                                userStatusTV.setText("Hi " + username);
+                                userStatusTV.setText("Hi, " + username);
+
                             } else {
                                 // No user is signed in
                                 userStatusTV.setText("Error Loading Profile");

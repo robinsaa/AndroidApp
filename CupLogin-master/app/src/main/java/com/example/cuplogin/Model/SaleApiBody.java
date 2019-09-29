@@ -1,4 +1,4 @@
-package com.example.cuplogin;
+package com.example.cuplogin.Model;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -14,9 +14,16 @@ public class SaleApiBody {
     @Expose
     private String cafeId;
 
-    public SaleApiBody(String cupId, String cafeId) {
+    @SerializedName("scanned_at")
+    @Expose
+    private String scannedAt;
+
+
+
+    public SaleApiBody(String cupId, String cafeId, String scannedAt) {
         this.cafeId = cafeId;
         this.cupId = cupId;
+        this.scannedAt =scannedAt;
     }
 
     public String getCupId() {
@@ -33,6 +40,15 @@ public class SaleApiBody {
 
     public void setCafeId(String cafeId) {
         this.cafeId = cafeId;
+    }
+
+
+    public String getScannedAt() {
+        return scannedAt;
+    }
+
+    public void setScannedAt(String scannedAt) {
+        this.scannedAt = scannedAt;
     }
 
 }

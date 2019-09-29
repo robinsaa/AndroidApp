@@ -1,6 +1,7 @@
 package com.example.cuplogin;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.room.Room;
@@ -8,6 +9,7 @@ import androidx.room.Room;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,6 +29,10 @@ import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -40,6 +46,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
     final int REQUEST_CAMERA_PERMISSION_ID = 1001;
     boolean MOVED_TO_DATABASE = false;
     private AppDatabase mDb;
+    String CAFE_ID;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -70,6 +77,8 @@ public class BarcodeScanActivity extends AppCompatActivity {
         barcodeValueTV = findViewById(R.id.barcodeValueTV);
         surfaceView = findViewById(R.id.surfaceView);
 
+         SharedPreferences mCafePref = getApplicationContext().getSharedPreferences("BorrowCupPref",Context.MODE_PRIVATE);
+        CAFE_ID = mCafePref.getString("cafe_id",null);
         mDb = Room.databaseBuilder(getApplicationContext(),
                 AppDatabase.class, "salesDb").allowMainThreadQueries().fallbackToDestructiveMigration().build();
 
@@ -89,8 +98,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
             public void surfaceCreated(SurfaceHolder holder) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (ActivityCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                        // TODO: Consider calling
-                        //    Activity#requestPermissions
+
                         ActivityCompat.requestPermissions(BarcodeScanActivity.this,new String[]{Manifest.permission.CAMERA},REQUEST_CAMERA_PERMISSION_ID);
                         return;
                     }
@@ -127,6 +135,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
                 {
 
                     runOnUiThread(new Runnable() {
+                        @RequiresApi(api = Build.VERSION_CODES.O)
                         @Override
                         public void run() {
                             Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
@@ -135,6 +144,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
                             barcodeValueTV.setText(qrCodes.valueAt(0).displayValue);
                             if(!MOVED_TO_DATABASE){
                                 saveToDB(barcodeValueTV.getText().toString());
+                                return;
                             }
                         }
                     });
@@ -147,13 +157,19 @@ public class BarcodeScanActivity extends AppCompatActivity {
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void saveToDB(String barcodeValue) {
-        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String millisInString  = dateFormat.format(new Date());
+
+        @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
+        final String dateInTimeZone  = dateFormat.format(new Date());
+
+
         int size = getDatabseCount();
-        mDb.saleDao().insert(new Sale(size+1,"101",barcodeValue,millisInString));
-        MOVED_TO_DATABASE =true;
+
+        mDb.saleDao().insert(new Sale(size+1,CAFE_ID,barcodeValue,dateInTimeZone));
+        MOVED_TO_DATABASE = true;
         Toast.makeText(getApplicationContext(),"Recorded Cup Details!",Toast.LENGTH_SHORT).show();
+
     }
 
     private int getDatabseCount() {
