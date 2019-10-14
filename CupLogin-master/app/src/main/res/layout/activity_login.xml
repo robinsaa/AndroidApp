@@ -63,7 +63,7 @@
             android:id="@+id/loginEmail"
             android:layout_width="match_parent"
             android:layout_height="61dp"
-            android:hint="@string/hint_email" />
+            android:hint="@string/hint_username" />
 
     </com.google.android.material.textfield.TextInputLayout>
 

@@ -3,7 +3,10 @@ package com.example.cuplogin;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -29,7 +32,7 @@ import com.google.firebase.database.ValueEventListener;
 public class LoginActivity extends AppCompatActivity {
 
     EditText loginEmail, loginPassword;
-    Button loginBtn, signupBtnLink;
+    Button loginBtn;
     ProgressBar progressBar;
 
     FirebaseAuth firebaseAuth;
@@ -44,7 +47,6 @@ public class LoginActivity extends AppCompatActivity {
 
         loginPassword = (EditText) findViewById(R.id.loginPassword);
         loginBtn = (Button) findViewById(R.id.login_btn);
-//        signupBtnLink = (Button) findViewById(R.id.signUpBtn);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         firebaseRef = FirebaseDatabase.getInstance().getReference();
@@ -67,37 +69,34 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String username = loginEmail.getText().toString();
-                final String password = loginPassword.getText().toString();
 
-                if (TextUtils.isEmpty(username)) {
-                    Toast.makeText(getApplicationContext(), "Enter email address!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                if (isNetworkAvailable()) {
+                    final String username = loginEmail.getText().toString();
+                    final String password = loginPassword.getText().toString();
 
-                if (TextUtils.isEmpty(password)) {
-                    Toast.makeText(getApplicationContext(), "Enter password!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+                    if (TextUtils.isEmpty(username)) {
+                        Toast.makeText(getApplicationContext(), "Enter email address!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-                progressBar.setVisibility(View.VISIBLE);
-//                //  Check if it is an email or not
-//                if(android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches())                 {
-//                    performLogin(email,password);
-//                    Log.d("Login","Login with email");
-//                }else{
+                    if (TextUtils.isEmpty(password)) {
+                        Toast.makeText(getApplicationContext(), "Enter password!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    progressBar.setVisibility(View.VISIBLE);
+
                     //get the emailId associated with the username
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                firebaseRef.child("user_ids").child(username)
+                    FirebaseUser user = firebaseAuth.getCurrentUser();
+                    firebaseRef.child("user_ids").child(username)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                    if (dataSnapshot.exists()){
-                                        String userEmail =  dataSnapshot.getValue(String.class);
-                                        Log.d("Login","Login with username");
-                                        performLogin(userEmail,password,username);
-                                    }
-                                   else{
+                                    if (dataSnapshot.exists()) {
+                                        String userEmail = dataSnapshot.getValue(String.class);
+                                        Log.d("Login", "Login with username");
+                                        performLogin(userEmail, password, username);
+                                    } else {
 
                                         progressBar.setVisibility(View.GONE);
                                         Toast.makeText(LoginActivity.this, "Invalid Username or password!", Toast.LENGTH_LONG).show();
@@ -110,9 +109,10 @@ public class LoginActivity extends AppCompatActivity {
 
                                 }
                             });
+                } else {
+                    Toast.makeText(LoginActivity.this, "Check Internet connection before logging in!", Toast.LENGTH_LONG).show();
                 }
-
-//            }
+            }
     });
 
 }
@@ -126,11 +126,7 @@ public class LoginActivity extends AppCompatActivity {
                 progressBar.setVisibility(View.GONE);
 
                 if(!task.isSuccessful()) {
-                    if (password.length() < 6) {
-                        loginPassword.setError("Input password more than 8 characters");
-                    } else {
-                        Toast.makeText(LoginActivity.this, "SigIn-Failed!", Toast.LENGTH_LONG).show();
-                    }
+                        Toast.makeText(LoginActivity.this, "Invalid Username or password!", Toast.LENGTH_LONG).show();
                 }else{
                     Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                     intent.putExtra("username",username);
@@ -141,7 +137,12 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
 
 }

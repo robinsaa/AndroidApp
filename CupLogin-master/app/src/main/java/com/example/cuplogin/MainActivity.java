@@ -6,8 +6,11 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.room.Room;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.util.Log;
@@ -73,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (firebaseAuth.getCurrentUser() != null) {
             UID = firebaseAuth.getCurrentUser().getUid();
-
+            if(isNetworkAvailable())
+            {
             mUserRef = firebaseRef.child(UID);
             mUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -91,13 +95,17 @@ public class MainActivity extends AppCompatActivity {
                             mPrefEditor.apply();
 
                             fullName = dataSnapshot.child("full_name").getValue(String.class);
-                            if (fullName != null) {
-                                userStatusTV.setText("Hi, " + fullName);
+                            userStatusTV.setVisibility(View.VISIBLE);
+                                if (fullName != null) {
+                                    userStatusTV.setText("Hi, " + fullName);
 
-                            } else {
-                                // No user is signed in
-                                userStatusTV.setText("Error Loading Profile");
-                            }
+                                } else {
+                                    // No user is signed in
+                                    userStatusTV.setText("Error Loading Profile");
+                                }
+
+
+
 
                         }
 
@@ -108,7 +116,11 @@ public class MainActivity extends AppCompatActivity {
 
                 }
             });
-
+            }
+            else{
+                userStatusTV.setVisibility(View.VISIBLE);
+                userStatusTV.setText("Connect to internet to send cup data!");
+            }
         }
 
 
@@ -161,6 +173,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
 
 

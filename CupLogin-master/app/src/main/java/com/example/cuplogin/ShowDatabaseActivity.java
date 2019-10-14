@@ -185,9 +185,9 @@ public class ShowDatabaseActivity extends AppCompatActivity {
         protected Void doInBackground(String... strings) {
 
             List<SaleApiBody> saleApiBody = new ArrayList<>();
-            int[] mSalesId = new int[10];
+            int[] mSalesId = new int[mSales.size()];
 
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < mSales.size(); i++) {
                 SaleApiBody sale = new SaleApiBody(mSales.get(i).getCupId(),
                         mSales.get(i).getCafeId(), mSales.get(i).getTimestamp());
                 saleApiBody.add(sale);
@@ -239,7 +239,7 @@ public class ShowDatabaseActivity extends AppCompatActivity {
 
         public void deleteSaleRecordById(int[] mSalesId) {
             Log.d("Delete:","In delete Sale Record");
-            for(int i=0;i<10;i++) {
+            for(int i=0;i<mSalesId.length;i++) {
                 Sale saleRecord = mDb.appDao().findSaleById(mSalesId[i]);
                 mDb.appDao().deleteSale(saleRecord);
             }
@@ -297,9 +297,9 @@ public class ShowDatabaseActivity extends AppCompatActivity {
         protected Void doInBackground(String... strings) {
 
             List<ReturnApiBody> returnApiBody = new ArrayList<>();
-            int[] mReturnsId = new int[10];
+            int[] mReturnsId = new int[mReturns.size()];
 
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < mReturns.size(); i++) {
                 ReturnApiBody return_cup = new ReturnApiBody(mReturns.get(i).getCupId(),null,mReturns.get(i).getDishwasherId(),mReturns.get(i).getScannedAt());
                 returnApiBody.add(return_cup);
                 mReturnsId[i] = mReturns.get(i).getRid();
@@ -351,7 +351,7 @@ public class ShowDatabaseActivity extends AppCompatActivity {
 
         public void deleteReturnRecordById(int[] mReturnsId) {
             Log.d("Delete:","In delete Return Record");
-            for(int i=0;i<10;i++) {
+            for(int i=0;i<mReturnsId.length;i++) {
                 Return_Record returnRecord = mDb.appDao().findReturnById(mReturnsId[i]);
                 mDb.appDao().deleteReturn(returnRecord);
             }
