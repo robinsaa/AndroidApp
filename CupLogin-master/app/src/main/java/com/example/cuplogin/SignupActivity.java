@@ -24,10 +24,11 @@ import java.util.Objects;
 
 public class SignupActivity extends AppCompatActivity {
 
-    EditText emailET,passwordET,usernameET;
+    EditText emailET,passwordET,usernameET,userTypeET;
     Button registerBtn;
     FirebaseAuth firebaseAuth;
     DatabaseReference firebaseRef,firebaseUserRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -37,6 +38,7 @@ public class SignupActivity extends AppCompatActivity {
 
         emailET = (EditText) findViewById(R.id.email);
         passwordET = (EditText) findViewById(R.id.password);
+        userTypeET = (EditText) findViewById(R.id.userType);
         usernameET = (EditText) findViewById(R.id.username);
         registerBtn = (Button) findViewById(R.id.signup_btn);
 
@@ -51,6 +53,8 @@ public class SignupActivity extends AppCompatActivity {
                 final String email = emailET.getText().toString();
                 String password = passwordET.getText().toString();
                 final String username  = usernameET.getText().toString();
+                final String userType = userTypeET.getText().toString().toLowerCase();
+
 
                 if (TextUtils.isEmpty(email)) {
                     Toast.makeText(getApplicationContext(), "Please fill in the required fields", Toast.LENGTH_SHORT).show();
@@ -76,8 +80,8 @@ public class SignupActivity extends AppCompatActivity {
                                     firebaseRef.child("user_ids").child(usernameET.getText().toString()).setValue(emailET.getText().toString());
                                     HashMap userData = new HashMap();
                                     userData.put("email", email);
-                                    userData.put("cafe-id", username);
-                                    userData.put("user-role", "user");
+                                    userData.put("uname", username);
+                                    userData.put("user-role", userType);
 
                                     if (firebaseAuth.getCurrentUser() != null) {
 

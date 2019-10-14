@@ -14,6 +14,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -21,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.cuplogin.Database.AppDatabase;
+import com.example.cuplogin.Database.Return_Record;
 import com.example.cuplogin.Database.Sale;
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
@@ -35,7 +37,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BarcodeScanActivity extends AppCompatActivity {
 
@@ -46,7 +50,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
     final int REQUEST_CAMERA_PERMISSION_ID = 1001;
     boolean MOVED_TO_DATABASE = false;
     private AppDatabase mDb;
-    String CAFE_ID;
+    String CAFE_ID,USER_TYPE;
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -77,8 +81,10 @@ public class BarcodeScanActivity extends AppCompatActivity {
         barcodeValueTV = findViewById(R.id.barcodeValueTV);
         surfaceView = findViewById(R.id.surfaceView);
 
-         SharedPreferences mCafePref = getApplicationContext().getSharedPreferences("BorrowCupPref",Context.MODE_PRIVATE);
+        SharedPreferences mCafePref = getApplicationContext().getSharedPreferences("BorrowCupPref",Context.MODE_PRIVATE);
         CAFE_ID = mCafePref.getString("cafe_id",null);
+        USER_TYPE = mCafePref.getString("user_type",null);
+
         mDb = Room.databaseBuilder(getApplicationContext(),
                 AppDatabase.class, "salesDb").allowMainThreadQueries().fallbackToDestructiveMigration().build();
 
@@ -121,6 +127,10 @@ public class BarcodeScanActivity extends AppCompatActivity {
             }
         });
 
+        final long[] lastTimestamp = {0};
+        final Set<String> idSet = new HashSet<String>();
+
+
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
             @Override
             public void release() {
@@ -130,9 +140,17 @@ public class BarcodeScanActivity extends AppCompatActivity {
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
                 final SparseArray<Barcode> qrCodes = detections.getDetectedItems();
+                final int DELAY = 2000;
 
-                if(qrCodes.size() != 0)
+                if (System.currentTimeMillis() - lastTimestamp[0] < DELAY) {
+                    return;
+                }
+
+                if(qrCodes.size() != 0 && !(idSet.contains(qrCodes.valueAt(0).displayValue)))
                 {
+                    idSet.add(qrCodes.valueAt(0).displayValue);
+                    lastTimestamp[0] = System.currentTimeMillis();
+                    Log.d("SCAN", String.valueOf(idSet));
 
                     runOnUiThread(new Runnable() {
                         @RequiresApi(api = Build.VERSION_CODES.O)
@@ -140,12 +158,9 @@ public class BarcodeScanActivity extends AppCompatActivity {
                         public void run() {
                             Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
                             vibrator.vibrate(1000);
-
                             barcodeValueTV.setText(qrCodes.valueAt(0).displayValue);
-                            if(!MOVED_TO_DATABASE){
-                                saveToDB(barcodeValueTV.getText().toString());
-                                return;
-                            }
+
+                            saveToDB(barcodeValueTV.getText().toString());
                         }
                     });
 
@@ -163,24 +178,46 @@ public class BarcodeScanActivity extends AppCompatActivity {
         @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
         final String dateInTimeZone  = dateFormat.format(new Date());
 
+        if(USER_TYPE.equals("cafe")){
+            int size = getDatabseCount();
+            mDb.appDao().insertToSale(new Sale(size+1, CAFE_ID, barcodeValue, dateInTimeZone));
+            MOVED_TO_DATABASE = true;
+            Toast.makeText(getApplicationContext(),"Recorded Sale Cup Details!",Toast.LENGTH_SHORT).show();
+        }
+        else if(USER_TYPE.equals("dishwasher")){
+            int size = getDatabseCount();
+            mDb.appDao().insertToReturn(new Return_Record(size+1, barcodeValue,null, CAFE_ID, dateInTimeZone));
+            MOVED_TO_DATABASE = true;
+            Toast.makeText(getApplicationContext(),"Recorded Return Cup Details!",Toast.LENGTH_SHORT).show();
 
-        int size = getDatabseCount();
-
-        mDb.saleDao().insert(new Sale(size+1,CAFE_ID,barcodeValue,dateInTimeZone));
-        MOVED_TO_DATABASE = true;
-        Toast.makeText(getApplicationContext(),"Recorded Cup Details!",Toast.LENGTH_SHORT).show();
+        }
 
     }
 
     private int getDatabseCount() {
-        List<Sale> mSales = mDb.saleDao().getAll();
-        if(mSales.size() > 0)
-        {
-            return mSales.size();
+        if(USER_TYPE.equals("cafe")){
+            List<Sale> mSales = mDb.appDao().getAllSales();
+            if(mSales.size() > 0)
+            {
+                return mSales.size();
+            }
+            else {
+                return 0;
+            }
+
         }
-        else {
-            return 0;
+        else if(USER_TYPE.equals("dishwasher")){
+            List<Return_Record> mReturns = mDb.appDao().getAllReturns();
+            if(mReturns.size() > 0)
+            {
+                return mReturns.size();
+            }
+            else {
+                return 0;
+            }
         }
+
+        return 0;
     }
 
 

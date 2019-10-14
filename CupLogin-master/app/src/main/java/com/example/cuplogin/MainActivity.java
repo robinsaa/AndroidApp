@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     TextView userStatusTV;
     Button barcodeScanBtn;
     DatabaseReference firebaseRef;
-    String username = "User";
+    String fullName = "User";
     String cafeId = "0";
 
     String UID = null;
@@ -84,12 +84,15 @@ public class MainActivity extends AppCompatActivity {
                         if(dataSnapshot.hasChild("cafe-id"))
                         {
                             String cafeId = dataSnapshot.child("cafe-id").getValue(String.class);
+                            String userType = dataSnapshot.child("user-role").getValue(String.class);
+
                             mPrefEditor.putString("cafe_id", cafeId);
+                            mPrefEditor.putString("user_type", userType);
                             mPrefEditor.apply();
 
-                            username = dataSnapshot.child("uname").getValue(String.class);
-                            if (username != null) {
-                                userStatusTV.setText("Hi, " + username);
+                            fullName = dataSnapshot.child("full_name").getValue(String.class);
+                            if (fullName != null) {
+                                userStatusTV.setText("Hi, " + fullName);
 
                             } else {
                                 // No user is signed in
@@ -147,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("userName", username);
+        outState.putString("fullName", fullName);
     }
 
     private void logOut(){

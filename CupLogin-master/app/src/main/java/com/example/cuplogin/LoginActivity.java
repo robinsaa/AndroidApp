@@ -44,7 +44,7 @@ public class LoginActivity extends AppCompatActivity {
 
         loginPassword = (EditText) findViewById(R.id.loginPassword);
         loginBtn = (Button) findViewById(R.id.login_btn);
-        //signupBtnLink = (Button) findViewById(R.id.signup_link_btn);
+//        signupBtnLink = (Button) findViewById(R.id.signUpBtn);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         firebaseRef = FirebaseDatabase.getInstance().getReference();
@@ -56,13 +56,13 @@ public class LoginActivity extends AppCompatActivity {
         }
 
 
-       //signupBtnLink.setOnClickListener(new View.OnClickListener() {
-        //    @Override
-        //    public void onClick(View v) {
-        //        startActivity(new Intent(LoginActivity.this, SignupActivity.class));
-        //        finish();
-        //    }
-       // });
+//       signupBtnLink.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                startActivity(new Intent(LoginActivity.this, SignupActivity.class));
+//                finish();
+//            }
+//        });
 
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
