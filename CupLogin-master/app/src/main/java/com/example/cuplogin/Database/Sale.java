@@ -20,7 +20,6 @@ public class Sale {
     public String timestamp;
 
 
-
     public int getSid() {
         return sid;
     }

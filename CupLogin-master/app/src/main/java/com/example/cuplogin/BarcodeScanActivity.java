@@ -11,6 +11,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Vibrator;
@@ -18,6 +19,7 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -140,7 +142,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
             @Override
             public void receiveDetections(Detector.Detections<Barcode> detections) {
                 final SparseArray<Barcode> qrCodes = detections.getDetectedItems();
-                final int DELAY = 2000;
+                final int DELAY = 1000;
 
                 if (System.currentTimeMillis() - lastTimestamp[0] < DELAY) {
                     return;
@@ -158,8 +160,6 @@ public class BarcodeScanActivity extends AppCompatActivity {
                         public void run() {
                             Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
                             vibrator.vibrate(1000);
-                            barcodeValueTV.setText(qrCodes.valueAt(0).displayValue);
-
                             saveToDB(barcodeValueTV.getText().toString());
                         }
                     });
@@ -182,16 +182,32 @@ public class BarcodeScanActivity extends AppCompatActivity {
             int size = getDatabseCount();
             mDb.appDao().insertToSale(new Sale(size+1, CAFE_ID, barcodeValue, dateInTimeZone));
             MOVED_TO_DATABASE = true;
-            Toast.makeText(getApplicationContext(),"Recorded Sale Cup Details!",Toast.LENGTH_SHORT).show();
+            customToast("Recorded Sale Cup Details!");
         }
         else if(USER_TYPE.equals("dishwasher")){
             int size = getDatabseCount();
             mDb.appDao().insertToReturn(new Return_Record(size+1, barcodeValue,null, CAFE_ID, dateInTimeZone));
             MOVED_TO_DATABASE = true;
-            Toast.makeText(getApplicationContext(),"Recorded Return Cup Details!",Toast.LENGTH_SHORT).show();
+            customToast("Recorded Return Cup Details!");
 
         }
 
+    }
+
+    public void customToast(String message) {
+
+        Toast toast = Toast.makeText(BarcodeScanActivity.this, message, Toast.LENGTH_SHORT);
+        View view = toast.getView();
+
+        //To change the Background of Toast
+        view.setBackgroundColor(getResources().getColor(R.color.colorPantone));
+        TextView text = (TextView) view.findViewById(android.R.id.message);
+
+        //Shadow of the Of the Text Color
+        text.setShadowLayer(0, 0, 0, Color.TRANSPARENT);
+        text.setTextColor(Color.WHITE);
+        text.setTextSize(Integer.valueOf(getResources().getString(R.string.text_size)));
+        toast.show();
     }
 
     private int getDatabseCount() {
