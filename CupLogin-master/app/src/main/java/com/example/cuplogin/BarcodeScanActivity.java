@@ -42,10 +42,6 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -190,7 +186,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
 
         if(USER_TYPE.equals("cafe")){
             int size = getDatabaseCount();
-            if(size>10)
+            if(size >= 10)
             {
                 mSales = mDb.appDao().getAllSales();
                 Log.d("Database", "Database Triggered to post to sale table of API");
@@ -257,12 +253,14 @@ public class BarcodeScanActivity extends AppCompatActivity {
         return 0;
     }
 
-    private class SendBatchSalesRecords extends AsyncTask<String, Void, Void> {
+    private class SendBatchSalesRecords extends AsyncTask<String, Void, String> {
 
+        int[] mSalesId;
         //Handle Http POST Request for a specific url
-        public void httpConnectionPostRequest(String apiUrl, String strJsonData, int[] mSalesId) {
+        public String httpConnectionPostRequest(String apiUrl, String strJsonData, int[] mSalesId) {
             //initialise
             URL url = null;
+            String responseCode = null;
             HttpURLConnection conn = null;
             try {
                 url = new URL(apiUrl);
@@ -284,12 +282,9 @@ public class BarcodeScanActivity extends AppCompatActivity {
                 PrintWriter out = new PrintWriter(conn.getOutputStream());
                 out.print(strJsonData);
                 out.close();
-                String responseCode = Integer.valueOf(conn.getResponseCode()).toString();
-
+                responseCode = Integer.valueOf(conn.getResponseCode()).toString();
                 Log.i("RESPONSE", responseCode);
-                if(responseCode.equals("201") || responseCode.equals("200")){
-                    deleteSaleRecordById(mSalesId);
-                }
+
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -298,14 +293,14 @@ public class BarcodeScanActivity extends AppCompatActivity {
                     conn.disconnect();
                 }
             }
-
+            return responseCode;
         }
 
         @Override
-        protected Void doInBackground(String... strings) {
+        protected String doInBackground(String... strings) {
 
             List<SaleApiBody> saleApiBody = new ArrayList<>();
-            int[] mSalesId = new int[mSales.size()];
+            mSalesId = new int[mSales.size()];
 
             for (int i = 0; i < mSales.size(); i++) {
                 SaleApiBody sale = new SaleApiBody(mSales.get(i).getCupId(),
@@ -316,13 +311,25 @@ public class BarcodeScanActivity extends AppCompatActivity {
             BatchSalesApiBody batchSalesApiBody = new BatchSalesApiBody(saleApiBody);
             Gson gson = new Gson();
             String json = gson.toJson(batchSalesApiBody.getSaleApiBodyList());
+//            Production URL
+//            String fullRestApiUrl = "***REMOVED***";
+
+//            Testing URL
             String fullRestApiUrl = "***REMOVED***";
+
             Log.d("Batch IDS", json);
             Log.d("Batch IDS", String.valueOf(mSalesId.length));
 
-            httpConnectionPostRequest(fullRestApiUrl, json ,mSalesId);
 
-            return null;
+            return httpConnectionPostRequest(fullRestApiUrl, json ,mSalesId);
+        }
+
+        protected void onPostExecute(String result) {
+            Log.d("Batch IDS", result);
+
+            if(result.equals("201") || result.equals("200")){
+                deleteSaleRecordById(mSalesId);
+            }
         }
 
 
@@ -332,10 +339,10 @@ public class BarcodeScanActivity extends AppCompatActivity {
                 Sale saleRecord = mDb.appDao().findSaleById(mSalesId[i]);
                 mDb.appDao().deleteSale(saleRecord);
             }
-            Log.d("Delete:", String.valueOf(mDb.appDao().getAllSales().size()));
+            Log.d("After Delete Size:", String.valueOf(mDb.appDao().getAllSales().size()));
             mSales.clear();
-            finish();
-            startActivity(getIntent());
+//            finish();
+//            startActivity(getIntent());
 
         }
     }
@@ -416,7 +423,12 @@ public class BarcodeScanActivity extends AppCompatActivity {
             BatchReturnApiBody batchReturnApiBody = new BatchReturnApiBody(returnApiBody);
             Gson gson = new Gson();
             String json = gson.toJson(batchReturnApiBody.getReturnApiBodyList());
+//            Production URL
+//            String fullRestApiUrl = "***REMOVED***";
+
+//            Testing URL
             String fullRestApiUrl = "***REMOVED***";
+
             Log.d("URL", json);
             Log.d("Batch IDS", String.valueOf(mReturnsId.length));
 
