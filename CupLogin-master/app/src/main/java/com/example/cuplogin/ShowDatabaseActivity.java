@@ -1,12 +1,18 @@
 package com.example.cuplogin;
 
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.example.cuplogin.Database.AppDatabase;
 import com.example.cuplogin.Database.Return_Record;
 import com.example.cuplogin.Database.Sale;
+
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
@@ -25,6 +31,7 @@ public class ShowDatabaseActivity extends AppCompatActivity {
     static Context mContext;
     static List<Sale> mSales = new ArrayList<>();
     static List<Return_Record> mReturns = new ArrayList<>();
+    private static final String TAG = "ExampleJobService";
 
     static AppDatabase mDb;
     String CAFE_ID = null;
@@ -33,6 +40,7 @@ public class ShowDatabaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_database);
         dbContent = findViewById(R.id.dbContent);
@@ -44,6 +52,7 @@ public class ShowDatabaseActivity extends AppCompatActivity {
                 .allowMainThreadQueries()
                 .fallbackToDestructiveMigration()
                 .build();
+
         SharedPreferences mCafePref = getApplicationContext().getSharedPreferences("BorrowCupPref", Context.MODE_PRIVATE);
         CAFE_ID = mCafePref.getString("cafe_id", null);
         USER_TYPE = mCafePref.getString("user_type", null);
@@ -100,4 +109,30 @@ public class ShowDatabaseActivity extends AppCompatActivity {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void scheduleJob(View view) {
+        ComponentName componentName = new ComponentName(this, BackgroundService.class);
+        JobInfo info = new JobInfo.Builder(123, componentName)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+                .setPersisted(true)
+                .setPeriodic(15 * 60 *1000)
+                .build();
+
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        int resultCode = jobScheduler.schedule(info);
+        if(resultCode == JobScheduler.RESULT_SUCCESS){
+            Log.d(TAG, "Job Scheduled(Activity)");
+        }
+        else{
+            Log.d(TAG, "Job Scheduling failed");
+        }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void cancelJob(View view) {
+        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+        jobScheduler.cancel(123);
+        Log.d(TAG, "Job Cancelled");
+
+    }
 }

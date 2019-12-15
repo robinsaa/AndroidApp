@@ -24,6 +24,13 @@ import android.widget.Toast;
 
 import com.example.cuplogin.Database.AppDatabase;
 import com.example.cuplogin.Database.Sale;
+import com.firebase.jobdispatcher.Constraint;
+import com.firebase.jobdispatcher.FirebaseJobDispatcher;
+import com.firebase.jobdispatcher.GooglePlayDriver;
+import com.firebase.jobdispatcher.Job;
+import com.firebase.jobdispatcher.Lifetime;
+import com.firebase.jobdispatcher.RetryStrategy;
+import com.firebase.jobdispatcher.Trigger;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -37,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -132,6 +140,35 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(I);
             }
         });
+
+
+        FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
+        final int periodicity = (int) TimeUnit.HOURS.toSeconds(1); // Every 1 hour periodicity expressed as seconds
+        final int toleranceInterval = (int)TimeUnit.MINUTES.toSeconds(15); // a small(ish) window of time when triggering is OK
+
+        Job myJob = dispatcher.newJobBuilder()
+                // the JobService that will be called
+                .setService(BackgroundService.class)
+                // uniquely identifies the job
+                .setTag("my-unique-tag")
+                // recurring job
+                .setRecurring(true)
+                // persist past a device reboot
+                .setLifetime(Lifetime.FOREVER)
+                // start between 0 and 60 seconds from now
+                .setTrigger(Trigger.executionWindow(0, 60))
+                // overwrite an existing job with the same tag
+                .setReplaceCurrent(true)
+                // retry with exponential backoff
+                .setRetryStrategy(RetryStrategy.DEFAULT_EXPONENTIAL)
+                // constraints that need to be satisfied for the job to run
+                .setConstraints(
+                        // only run on an unmetered network
+                        Constraint.ON_UNMETERED_NETWORK
+                )
+                .build();
+
+        dispatcher.mustSchedule(myJob);
     }
 
     @Override

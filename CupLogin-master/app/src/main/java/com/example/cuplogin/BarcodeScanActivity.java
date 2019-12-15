@@ -8,6 +8,9 @@ import androidx.room.Room;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -48,6 +51,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.example.cuplogin.BarcodeScanActivity.mSales;
+
 public class BarcodeScanActivity extends AppCompatActivity {
 
     TextView barcodeValueTV;
@@ -58,6 +63,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
     boolean MOVED_TO_DATABASE = false;
     private AppDatabase mDb;
     String CAFE_ID,USER_TYPE;
+    private static final String TAG = "ExampleJobService";
 
     static List<Sale> mSales = new ArrayList<>();
     static List<Return_Record> mReturns = new ArrayList<>();
@@ -186,30 +192,45 @@ public class BarcodeScanActivity extends AppCompatActivity {
 
         if(USER_TYPE.equals("cafe")){
             int size = getDatabaseCount();
-            if(size >= 10)
-            {
-                mSales = mDb.appDao().getAllSales();
-                Log.d("Database", "Database Triggered to post to sale table of API");
-                new SendBatchSalesRecords().execute();
-            }
             mDb.appDao().insertToSale(new Sale(size+1, CAFE_ID, barcodeValue, dateInTimeZone));
             MOVED_TO_DATABASE = true;
             customToast("Recorded Sale Cup Details!");
         }
         else if(USER_TYPE.equals("dishwasher")){
             int size = getDatabaseCount();
-            if (size >= 10) {
-                mReturns = mDb.appDao().getAllReturns();
-                Log.d("Database", "Database Triggered to post to return table of API");
-                new SendBatchReturnRecords().execute();
-            }
             mDb.appDao().insertToReturn(new Return_Record(size+1, barcodeValue,null, CAFE_ID, dateInTimeZone));
             MOVED_TO_DATABASE = true;
             customToast("Recorded Return Cup Details!");
-
         }
 
     }
+
+//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//    public void scheduleJob() {
+//        ComponentName componentName = new ComponentName(this, BackgroundService.class);
+//        JobInfo info = new JobInfo.Builder(123, componentName)
+//                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+//                .setPersisted(true)
+//                .setPeriodic(15 * 60 *1000)
+//                .build();
+//        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+//        int resultCode = jobScheduler.schedule(info);
+//        if(resultCode == JobScheduler.RESULT_SUCCESS){
+//            Log.d(TAG, "Job Scheduled(Activity)");
+//        }
+//        else{
+//            Log.d(TAG, "Job Scheduling failed");
+//        }
+//    }
+
+//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//    public void cancelJob(View view) {
+//        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+//        jobScheduler.cancel(123);
+//        Log.d(TAG, "Job Cancelled");
+//
+//    }
+//
 
     public void customToast(String message) {
 
@@ -253,99 +274,6 @@ public class BarcodeScanActivity extends AppCompatActivity {
         return 0;
     }
 
-    private class SendBatchSalesRecords extends AsyncTask<String, Void, String> {
-
-        int[] mSalesId;
-        //Handle Http POST Request for a specific url
-        public String httpConnectionPostRequest(String apiUrl, String strJsonData, int[] mSalesId) {
-            //initialise
-            URL url = null;
-            String responseCode = null;
-            HttpURLConnection conn = null;
-            try {
-                url = new URL(apiUrl);
-                //open the connection
-                conn = (HttpURLConnection) url.openConnection();
-                //set the timeout
-                conn.setReadTimeout(10000);
-                conn.setConnectTimeout(15000);
-                //set the connection method to POST
-                conn.setRequestMethod("POST");
-                //set the output to true
-                conn.setDoOutput(true);
-                //set length of the data you want to send
-                conn.setFixedLengthStreamingMode(strJsonData.getBytes().length);
-                //add HTTP headers
-                conn.setRequestProperty("Content-Type", "application/json");
-                //Send the POST out
-                Log.d("Data", strJsonData);
-                PrintWriter out = new PrintWriter(conn.getOutputStream());
-                out.print(strJsonData);
-                out.close();
-                responseCode = Integer.valueOf(conn.getResponseCode()).toString();
-                Log.i("RESPONSE", responseCode);
-
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
-                }
-            }
-            return responseCode;
-        }
-
-        @Override
-        protected String doInBackground(String... strings) {
-
-            List<SaleApiBody> saleApiBody = new ArrayList<>();
-            mSalesId = new int[mSales.size()];
-
-            for (int i = 0; i < mSales.size(); i++) {
-                SaleApiBody sale = new SaleApiBody(mSales.get(i).getCupId(),
-                        mSales.get(i).getCafeId(), mSales.get(i).getTimestamp());
-                saleApiBody.add(sale);
-                mSalesId[i] = mSales.get(i).getSid();
-            }
-            BatchSalesApiBody batchSalesApiBody = new BatchSalesApiBody(saleApiBody);
-            Gson gson = new Gson();
-            String json = gson.toJson(batchSalesApiBody.getSaleApiBodyList());
-//            Production URL
-//            String fullRestApiUrl = "***REMOVED***";
-
-//            Testing URL
-            String fullRestApiUrl = "***REMOVED***";
-
-            Log.d("Batch IDS", json);
-            Log.d("Batch IDS", String.valueOf(mSalesId.length));
-
-
-            return httpConnectionPostRequest(fullRestApiUrl, json ,mSalesId);
-        }
-
-        protected void onPostExecute(String result) {
-            Log.d("Batch IDS", result);
-
-            if(result.equals("201") || result.equals("200")){
-                deleteSaleRecordById(mSalesId);
-            }
-        }
-
-
-        public void deleteSaleRecordById(int[] mSalesId) {
-            Log.d("Delete:","In delete Sale Record");
-            for(int i=0;i<mSalesId.length;i++) {
-                Sale saleRecord = mDb.appDao().findSaleById(mSalesId[i]);
-                mDb.appDao().deleteSale(saleRecord);
-            }
-            Log.d("After Delete Size:", String.valueOf(mDb.appDao().getAllSales().size()));
-            mSales.clear();
-//            finish();
-//            startActivity(getIntent());
-
-        }
-    }
 
 
 
@@ -365,93 +293,6 @@ public class BarcodeScanActivity extends AppCompatActivity {
 
 
 
-
-    private class SendBatchReturnRecords extends AsyncTask<String, Void, Void> {
-
-        //Handle Http POST Request for a specific url
-        public void httpConnectionPostRequest(String apiUrl, String strJsonData, int[] mReturnsId) {
-            //initialise
-            URL url = null;
-            HttpURLConnection conn = null;
-            try {
-                url = new URL(apiUrl);
-                //open the connection
-                conn = (HttpURLConnection) url.openConnection();
-                //set the timeout
-                conn.setReadTimeout(10000);
-                conn.setConnectTimeout(15000);
-                //set the connection method to POST
-                conn.setRequestMethod("POST");
-                //set the output to true
-                conn.setDoOutput(true);
-                //set length of the data you want to send
-                conn.setFixedLengthStreamingMode(strJsonData.getBytes().length);
-                //add HTTP headers
-                conn.setRequestProperty("Content-Type", "application/json");
-                //Send the POST out
-                Log.d("Data", strJsonData);
-                PrintWriter out = new PrintWriter(conn.getOutputStream());
-                out.print(strJsonData);
-                out.close();
-                String responseCode = Integer.valueOf(conn.getResponseCode()).toString();
-                Log.i("RESPONSE",responseCode );
-                if(responseCode.equals("201") || responseCode.equals("200")){
-                    deleteReturnRecordById(mReturnsId);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
-                }
-            }
-
-        }
-
-        @Override
-        protected Void doInBackground(String... strings) {
-
-            List<ReturnApiBody> returnApiBody = new ArrayList<>();
-            int[] mReturnsId = new int[mReturns.size()];
-
-            for (int i = 0; i < mReturns.size(); i++) {
-                ReturnApiBody return_cup = new ReturnApiBody(mReturns.get(i).getCupId(),null,mReturns.get(i).getDishwasherId(),mReturns.get(i).getScannedAt());
-                returnApiBody.add(return_cup);
-                mReturnsId[i] = mReturns.get(i).getRid();
-            }
-
-            BatchReturnApiBody batchReturnApiBody = new BatchReturnApiBody(returnApiBody);
-            Gson gson = new Gson();
-            String json = gson.toJson(batchReturnApiBody.getReturnApiBodyList());
-//            Production URL
-//            String fullRestApiUrl = "***REMOVED***";
-
-//            Testing URL
-            String fullRestApiUrl = "***REMOVED***";
-
-            Log.d("URL", json);
-            Log.d("Batch IDS", String.valueOf(mReturnsId.length));
-
-            httpConnectionPostRequest(fullRestApiUrl, json ,mReturnsId);
-
-            return null;
-        }
-
-
-        public void deleteReturnRecordById(int[] mReturnsId) {
-            Log.d("Delete:","In delete Return Record");
-            for(int i=0;i<mReturnsId.length;i++) {
-                Return_Record returnRecord = mDb.appDao().findReturnById(mReturnsId[i]);
-                mDb.appDao().deleteReturn(returnRecord);
-            }
-            Log.d("Deleted:", String.valueOf(mDb.appDao().getAllReturns().size()));
-            mReturns.clear();
-            finish();
-            startActivity(getIntent());
-        }
-
-
-    }
 
 
 }

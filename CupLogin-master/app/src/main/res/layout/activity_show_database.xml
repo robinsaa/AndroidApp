@@ -50,7 +50,10 @@
 
 
         </LinearLayout>
+
+
     </ScrollView>
+
 
     <TextView
         android:id="@+id/errorMessage"
