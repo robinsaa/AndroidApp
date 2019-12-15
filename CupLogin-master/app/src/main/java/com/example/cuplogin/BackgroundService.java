@@ -66,7 +66,14 @@ public class BackgroundService extends JobService {
     @Override
     public boolean onStopJob(JobParameters jobParameters) {
         Log.d(TAG, "Job cancelled before completion");
-        new SendBatchReturnRecords().cancel(true);
+
+        if(USER_TYPE.equals("cafe")) {
+            new SendBatchSalesRecords().cancel(true);
+        }
+        else if(USER_TYPE.equals("dishwasher")) {
+            new SendBatchReturnRecords().cancel(true);
+        }
+
         jobCancelled = true;
         return false;
     }
@@ -82,39 +89,35 @@ public class BackgroundService extends JobService {
         SharedPreferences mCafePref = getApplicationContext().getSharedPreferences("BorrowCupPref",Context.MODE_PRIVATE);
         CAFE_ID = mCafePref.getString("cafe_id",null);
         USER_TYPE = mCafePref.getString("user_type",null);
+        mSales = mDb.appDao().getAllSales();
+        mReturns = mDb.appDao().getAllReturns();
 
 
-        if (USER_TYPE.equals("cafe")) {
-            mSales = mDb.appDao().getAllSales();
+//            if (mSales.size() > 10) {
+//                //Do the needful
+//            } else {
+//                Log.d(TAG, "User: Job cancelled as there are less than 10 records");
+//                onStopJob(job);
+//            }
+            doBackgroundWork(job);
 
-            if (mSales.size() > 10) {
-                doBackgroundWork(job);
-            } else {
-                Log.d(TAG, "User: Job cancelled as there are less than 10 records");
-                onStopJob(job);
-            }
 
-        }
-        else if(USER_TYPE.equals("dishwasher")) {
-
-            mReturns = mDb.appDao().getAllReturns();
-            if (mReturns.size() > 10) {
-                doBackgroundWork(job);
-            } else {
-                Log.d(TAG, "Return: Job cancelled as there are less than 10 records");
-                onStopJob(job);
-            }
-
-        }
+//            mReturns = mDb.appDao().getAllReturns();
+//            if (mReturns.size() > 10) {
+//               //Do the needful
+//            } else {
+//                Log.d(TAG, "Return: Job cancelled as there are less than 10 records");
+//                onStopJob(job);
+//            }
 
         return true;
     }
 
-    private class SendBatchSalesRecords extends AsyncTask<String, Void, String> {
+    private class SendBatchSalesRecords extends AsyncTask<String, Void, Void> {
 
         int[] mSalesId;
         //Handle Http POST Request for a specific url
-        public String httpConnectionPostRequest(String apiUrl, String strJsonData, int[] mSalesId) {
+        public void httpConnectionPostRequest(String apiUrl, String strJsonData, int[] mSalesId) {
             //initialise
             URL url = null;
             String responseCode = null;
@@ -152,11 +155,10 @@ public class BackgroundService extends JobService {
                     conn.disconnect();
                 }
             }
-            return responseCode;
         }
 
         @Override
-        protected String doInBackground(String... strings) {
+        protected Void doInBackground(String... strings) {
 
             List<SaleApiBody> saleApiBody = new ArrayList<>();
             mSalesId = new int[mSales.size()];
@@ -180,12 +182,8 @@ public class BackgroundService extends JobService {
             Log.d("Batch IDS", String.valueOf(mSalesId.length));
 
 
-            return httpConnectionPostRequest(fullRestApiUrl, json ,mSalesId);
-        }
-
-        protected void onPostExecute(String result) {
-            Log.d("Batch IDS", result);
-
+            httpConnectionPostRequest(fullRestApiUrl, json ,mSalesId);
+            return null;
         }
 
 

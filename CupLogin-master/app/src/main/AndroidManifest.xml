@@ -37,7 +37,8 @@
 
         <service
             android:exported="false"
-            android:name=".BackgroundService">
+            android:name=".BackgroundService"
+            android:permission="android.permission.BIND_JOB_SERVICE">
             <intent-filter>
                 <action android:name="com.firebase.jobdispatcher.ACTION_EXECUTE"/>
             </intent-filter>

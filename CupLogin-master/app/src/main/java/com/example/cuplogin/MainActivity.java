@@ -143,14 +143,14 @@ public class MainActivity extends AppCompatActivity {
 
 
         FirebaseJobDispatcher dispatcher = new FirebaseJobDispatcher(new GooglePlayDriver(this));
-        final int periodicity = (int) TimeUnit.HOURS.toSeconds(1); // Every 1 hour periodicity expressed as seconds
-        final int toleranceInterval = (int)TimeUnit.MINUTES.toSeconds(15); // a small(ish) window of time when triggering is OK
+//        final int periodicity = (int) TimeUnit.HOURS.toSeconds(1); // Every 1 hour periodicity expressed as seconds
+//        final int toleranceInterval = (int)TimeUnit.MINUTES.toSeconds(15); // a small(ish) window of time when triggering is OK
 
         Job myJob = dispatcher.newJobBuilder()
                 // the JobService that will be called
                 .setService(BackgroundService.class)
                 // uniquely identifies the job
-                .setTag("my-unique-tag")
+                .setTag("123")
                 // recurring job
                 .setRecurring(true)
                 // persist past a device reboot
