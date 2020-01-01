@@ -6,8 +6,10 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.room.Room;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -61,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     DatabaseReference mUserRef;
     SharedPreferences mUserPref;
     SharedPreferences.Editor mPrefEditor;
+    private NetworkReceiver mReceiver;
+    ConnectivityManager connectivityManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,6 +75,8 @@ public class MainActivity extends AppCompatActivity {
         mPrefEditor = mUserPref.edit();
 
 
+        connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+
         //Setup UI Elements
         barcodeScanBtn = (Button) findViewById(R.id.scanBarcodeBtn);
         userStatusTV = (TextView) findViewById(R.id.userStatus);
@@ -78,59 +84,15 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         toolbar.setTitleTextColor(getResources().getColor(R.color.white));
 
+        mReceiver = new NetworkReceiver();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(mReceiver,filter);
+
         //Handle authentication
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseRef = FirebaseDatabase.getInstance().getReference();
 
-        if (firebaseAuth.getCurrentUser() != null) {
-            UID = firebaseAuth.getCurrentUser().getUid();
-            if(isNetworkAvailable())
-            {
-            mUserRef = firebaseRef.child(UID);
-            mUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(@NonNull DataSnapshot dataSnapshot)
-                {
-                    if(dataSnapshot.exists())
-                    {
-                        if(dataSnapshot.hasChild("cafe-id"))
-                        {
-                            String cafeId = dataSnapshot.child("cafe-id").getValue(String.class);
-                            String userType = dataSnapshot.child("user-role").getValue(String.class);
-
-                            mPrefEditor.putString("cafe_id", cafeId);
-                            mPrefEditor.putString("user_type", userType);
-                            mPrefEditor.apply();
-
-                            fullName = dataSnapshot.child("full_name").getValue(String.class);
-                            userStatusTV.setVisibility(View.VISIBLE);
-                                if (fullName != null) {
-                                    userStatusTV.setText("Hi, " + fullName);
-
-                                } else {
-                                    // No user is signed in
-                                    userStatusTV.setText("Error Loading Profile");
-                                }
-
-
-
-
-                        }
-
-                    }
-                }
-                @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
-            });
-            }
-            else{
-                userStatusTV.setVisibility(View.VISIBLE);
-                userStatusTV.setText("Connect to internet to send cup data!");
-            }
-        }
-
+        Log.d("MainActivity","Oncreate");
 
 
         barcodeScanBtn.setOnClickListener(new View.OnClickListener() {
@@ -171,6 +133,49 @@ public class MainActivity extends AppCompatActivity {
         dispatcher.mustSchedule(myJob);
     }
 
+    private void fetchCafeDetails() {
+
+        if (firebaseAuth.getCurrentUser() != null) {
+            UID = firebaseAuth.getCurrentUser().getUid();
+
+            mUserRef = firebaseRef.child(UID);
+            mUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.exists()) {
+                        if (dataSnapshot.hasChild("cafe-id")) {
+                            String cafeId = dataSnapshot.child("cafe-id").getValue(String.class);
+                            String userType = dataSnapshot.child("user-role").getValue(String.class);
+
+                            mPrefEditor.putString("cafe_id", cafeId);
+                            mPrefEditor.putString("user_type", userType);
+                            mPrefEditor.apply();
+
+                            fullName = dataSnapshot.child("full_name").getValue(String.class);
+                            userStatusTV.setVisibility(View.VISIBLE);
+                            if (fullName != null) {
+                                userStatusTV.setText("Hi, " + fullName);
+
+                            } else {
+                                // No user is signed in
+                                userStatusTV.setText("Error Loading Profile");
+                            }
+                        }
+
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                }
+            });
+        }
+    }
+
+
+
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -210,13 +215,35 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    public class NetworkReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            if(connectivityManager!= null){
+                NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+                boolean isWifiAvailable = connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+
+                if (networkInfo != null && isWifiAvailable){
+                    userStatusTV.setText("Loading Cafe Name...");
+                    fetchCafeDetails();
+                }
+                else {
+                    userStatusTV.setText("Internet is down!! You can still continue Scanning though.");
+                }
+
+            }
+        }
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if(mReceiver != null){
+            unregisterReceiver(mReceiver);
+        }
+    }
 
 
 }

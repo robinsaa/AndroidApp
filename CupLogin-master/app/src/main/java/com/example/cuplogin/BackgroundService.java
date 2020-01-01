@@ -99,7 +99,7 @@ public class BackgroundService extends JobService {
 //                Log.d(TAG, "User: Job cancelled as there are less than 10 records");
 //                onStopJob(job);
 //            }
-            doBackgroundWork(job);
+        doBackgroundWork(job);
 
 
 //            mReturns = mDb.appDao().getAllReturns();
@@ -173,10 +173,10 @@ public class BackgroundService extends JobService {
             Gson gson = new Gson();
             String json = gson.toJson(batchSalesApiBody.getSaleApiBodyList());
 //            Production URL
-//            String fullRestApiUrl = "***REMOVED***";
+            String fullRestApiUrl = "***REMOVED***";
 
 //            Testing URL
-            String fullRestApiUrl = "***REMOVED***";
+//            String fullRestApiUrl = "***REMOVED***";
 
             Log.d("Batch IDS", json);
             Log.d("Batch IDS", String.valueOf(mSalesId.length));
@@ -260,10 +260,10 @@ public class BackgroundService extends JobService {
             String json = gson.toJson(batchReturnApiBody.getReturnApiBodyList());
 
 //            Production URL
-//            String fullRestApiUrl = "***REMOVED***";
+            String fullRestApiUrl = "***REMOVED***";
 
 //            Testing URL
-            String fullRestApiUrl = "***REMOVED***";
+//            String fullRestApiUrl = "***REMOVED***";
 
             Log.d(TAG, json);
             Log.d(TAG, String.valueOf(mReturnsId.length));
