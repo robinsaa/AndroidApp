@@ -37,6 +37,7 @@ public class LoginActivity extends AppCompatActivity {
 
     FirebaseAuth firebaseAuth;
     DatabaseReference firebaseRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,13 +59,6 @@ public class LoginActivity extends AppCompatActivity {
         }
 
 
-//       signupBtnLink.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                startActivity(new Intent(LoginActivity.this, SignupActivity.class));
-//                finish();
-//            }
-//        });
 
         loginBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -97,7 +91,6 @@ public class LoginActivity extends AppCompatActivity {
                                         Log.d("Login", "Login with username");
                                         performLogin(userEmail, password, username);
                                     } else {
-
                                         progressBar.setVisibility(View.GONE);
                                         Toast.makeText(LoginActivity.this, "Invalid Username or password!", Toast.LENGTH_LONG).show();
                                     }

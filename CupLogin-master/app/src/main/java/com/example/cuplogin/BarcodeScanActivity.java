@@ -15,9 +15,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.ToneGenerator;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.util.Log;
 import android.util.SparseArray;
@@ -28,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.cuplogin.Database.AppDatabase;
+import com.example.cuplogin.Database.Cup;
 import com.example.cuplogin.Database.Return_Record;
 import com.example.cuplogin.Database.Sale;
 import com.example.cuplogin.Model.BatchReturnApiBody;
@@ -60,10 +66,9 @@ public class BarcodeScanActivity extends AppCompatActivity {
     SurfaceView surfaceView;
     BarcodeDetector barcodeDetector;
     final int REQUEST_CAMERA_PERMISSION_ID = 1001;
-    boolean MOVED_TO_DATABASE = false;
     private AppDatabase mDb;
     String CAFE_ID,USER_TYPE;
-    private static final String TAG = "ExampleJobService";
+    private static final String TAG = "JobService";
 
     static List<Sale> mSales = new ArrayList<>();
     static List<Return_Record> mReturns = new ArrayList<>();
@@ -98,6 +103,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
         surfaceView = findViewById(R.id.surfaceView);
 
         SharedPreferences mCafePref = getApplicationContext().getSharedPreferences("BorrowCupPref",Context.MODE_PRIVATE);
+
         CAFE_ID = mCafePref.getString("cafe_id",null);
         USER_TYPE = mCafePref.getString("user_type",null);
 
@@ -145,7 +151,7 @@ public class BarcodeScanActivity extends AppCompatActivity {
         });
 
         final long[] lastTimestamp = {0};
-        final Set<String> idSet = new HashSet<String>();
+//        final Set<String> idSet = new HashSet<String>();
 
 
         barcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
@@ -163,23 +169,42 @@ public class BarcodeScanActivity extends AppCompatActivity {
                     return;
                 }
 
-                if(qrCodes.size() != 0 && !(idSet.contains(qrCodes.valueAt(0).displayValue)))
+                if(qrCodes.size() != 0)
                 {
-                    idSet.add(qrCodes.valueAt(0).displayValue);
                     lastTimestamp[0] = System.currentTimeMillis();
-                    Log.d("SCAN ID's", String.valueOf(idSet));
 
                     final String qrCodeValue = qrCodes.valueAt(0).displayValue;
                     runOnUiThread(new Runnable() {
-                        @RequiresApi(api = Build.VERSION_CODES.O)
-                        @Override
-                        public void run() {
+                                @Override
+                                @RequiresApi(api = Build.VERSION_CODES.O)
+                                public void run() {
+                        boolean validCup = checkIfCupIsValid(qrCodeValue);
+                        Log.d("Cup Data","Valid Cup: " + validCup);
+                        //Version B: Fix for having no feedback if cup isn't valid
+                        if(validCup) //Store to database if a cup is valid
+                        {
                             Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                            final MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.notification);
+                            mediaPlayer.start();
+                            //TODO:  Need to have a look
+                            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                                public void onCompletion(MediaPlayer mp) {
+                                    mp.reset();
+                                    mp.release();
+                                }
+                            });
                             vibrator.vibrate(1000);
                             saveToDB(qrCodeValue);
                         }
+                        else{ // Don't store to database as cup is already scanned
+                            Log.d("Cup Data", "Not stored in DB");
+                            // Version A: If feedback needed repeat the above vibrator and sound code in this section.
+
+                        }
+                    }
                     });
                 }
+
             }
         });
     }
@@ -189,53 +214,68 @@ public class BarcodeScanActivity extends AppCompatActivity {
 
         @SuppressLint("SimpleDateFormat") SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
         final String dateInTimeZone  = dateFormat.format(new Date());
+        boolean validCup = false;
 
+
+        Log.d("Cup Data", "Stored in DB");
         if(USER_TYPE.equals("cafe")){
-            int size = getDatabaseCount();
-            mDb.appDao().insertToSale(new Sale(size+1, CAFE_ID, barcodeValue, dateInTimeZone));
-            MOVED_TO_DATABASE = true;
-            customToast("Recorded Sale Cup Details!");
-        }
-        else if(USER_TYPE.equals("dishwasher")){
-            int size = getDatabaseCount();
-            mDb.appDao().insertToReturn(new Return_Record(size+1, barcodeValue,null, CAFE_ID, dateInTimeZone));
-            MOVED_TO_DATABASE = true;
-            customToast("Recorded Return Cup Details!");
-        }
 
+            mDb.appDao().insertToSale(new Sale(getDatabaseCount()+1, CAFE_ID, barcodeValue, dateInTimeZone));
+
+            Log.d(TAG, "Database Count: " + getDatabaseCount());
+            Log.d(TAG, "Saved Cup ID: " + mDb.appDao().findSaleById(getDatabaseCount()).getCupId());
+
+            customToast("Scanned Cup Successfully!");
+
+        }
+        else if(USER_TYPE.equals("dishwasher")) {
+
+//            int size = getDatabaseCount();
+            mDb.appDao().insertToReturn(new Return_Record(getDatabaseCount()+1, barcodeValue,null, CAFE_ID, dateInTimeZone));
+
+            Log.d(TAG, "Database Count: " + getDatabaseCount());
+            Log.d(TAG, "Saved Cup ID: " + mDb.appDao().findReturnById(getDatabaseCount()).getCupId());
+
+            customToast("Scanned Cup Successfully!");
+        }
     }
 
-//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-//    public void scheduleJob() {
-//        ComponentName componentName = new ComponentName(this, BackgroundService.class);
-//        JobInfo info = new JobInfo.Builder(123, componentName)
-//                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
-//                .setPersisted(true)
-//                .setPeriodic(15 * 60 *1000)
-//                .build();
-//        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-//        int resultCode = jobScheduler.schedule(info);
-//        if(resultCode == JobScheduler.RESULT_SUCCESS){
-//            Log.d(TAG, "Job Scheduled(Activity)");
-//        }
-//        else{
-//            Log.d(TAG, "Job Scheduling failed");
-//        }
-//    }
+    private boolean checkIfCupIsValid(String barcodeValue) {
 
-//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-//    public void cancelJob(View view) {
-//        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-//        jobScheduler.cancel(123);
-//        Log.d(TAG, "Job Cancelled");
-//
-//    }
-//
+        long currentTS = System.currentTimeMillis();
+        Log.d("Timestamps", String.valueOf(currentTS));
+
+        Cup cupData = mDb.cupDao().findCupById(barcodeValue);
+
+        if(cupData != null)
+        {
+            Log.d("Cup Data", "Found Cup: " + cupData.getmCupId());
+            long existingTimestamp = Long.parseLong(cupData.getmTimeStamp());
+            //convert to seconds from millis
+            long existingTimestampInSec = existingTimestamp / 1000;
+            long currentTimestampInSec = currentTS / 1000;
+            Log.d("Cup Data", "Current(sec): " + currentTimestampInSec + "Existing(sec): " + existingTimestampInSec);
+
+            //check if the TS of cup scanned again is not scanned within 6 hours
+            if((existingTimestampInSec + 21600) < currentTimestampInSec)
+            {
+                cupData.setmTimeStamp(String.valueOf(currentTS));
+                mDb.cupDao().update(cupData);
+                return true;
+            }
+        }
+        else{
+            mDb.cupDao().insertCup(new Cup(barcodeValue,String.valueOf(currentTS)));
+            return true;
+        }
+
+        return false;
+    }
+
 
     public void customToast(String message) {
-
-        Toast toast = Toast.makeText(BarcodeScanActivity.this, message, Toast.LENGTH_SHORT);
-        View view = toast.getView();
+        final Toast mToastToShow = Toast.makeText(BarcodeScanActivity.this, message, Toast.LENGTH_SHORT);
+        View view = mToastToShow.getView();
 
         //To change the Background of Toast
         view.setBackgroundColor(getResources().getColor(R.color.colorPantone));
@@ -245,15 +285,32 @@ public class BarcodeScanActivity extends AppCompatActivity {
         text.setShadowLayer(0, 0, 0, Color.TRANSPARENT);
         text.setTextColor(Color.WHITE);
         text.setTextSize(Integer.valueOf(getResources().getString(R.string.text_size)));
-        toast.show();
+
+        // Set the countdown to display the toast
+        CountDownTimer toastCountDown;
+        //Adjust the toast message duration on this line
+        toastCountDown = new CountDownTimer(500, 1000 /*Tick duration*/) {
+            public void onTick(long millisUntilFinished) {
+                mToastToShow.show();
+            }
+            public void onFinish() {
+                mToastToShow.cancel();
+            }
+        };
+
+        // Show the toast and starts the countdown
+        mToastToShow.show();
+        toastCountDown.start();
     }
 
     private int getDatabaseCount() {
+
         if(USER_TYPE.equals("cafe")){
             List<Sale> mSales = mDb.appDao().getAllSales();
+
             if(mSales.size() > 0)
             {
-                return mSales.size();
+                return mSales.get(mSales.size()-1).getSid();
             }
             else {
                 return 0;
@@ -262,9 +319,10 @@ public class BarcodeScanActivity extends AppCompatActivity {
         }
         else if(USER_TYPE.equals("dishwasher")){
             List<Return_Record> mReturns = mDb.appDao().getAllReturns();
+
             if(mReturns.size() > 0)
             {
-                return mReturns.size();
+                return mReturns.get(mReturns.size()-1).getRid();
             }
             else {
                 return 0;

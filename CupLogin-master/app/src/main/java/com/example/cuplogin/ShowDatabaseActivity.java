@@ -109,30 +109,30 @@ public class ShowDatabaseActivity extends AppCompatActivity {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void scheduleJob(View view) {
-        ComponentName componentName = new ComponentName(this, BackgroundService.class);
-        JobInfo info = new JobInfo.Builder(123, componentName)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
-                .setPersisted(true)
-                .setPeriodic(15 * 60 *1000)
-                .build();
-
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-        int resultCode = jobScheduler.schedule(info);
-        if(resultCode == JobScheduler.RESULT_SUCCESS){
-            Log.d(TAG, "Job Scheduled(Activity)");
-        }
-        else{
-            Log.d(TAG, "Job Scheduling failed");
-        }
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void cancelJob(View view) {
-        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
-        jobScheduler.cancel(123);
-        Log.d(TAG, "Job Cancelled");
-
-    }
+//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//    public void scheduleJob(View view) {
+//        ComponentName componentName = new ComponentName(this, BackgroundService.class);
+//        JobInfo info = new JobInfo.Builder(123, componentName)
+//                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+//                .setPersisted(true)
+//                .setPeriodic(15 * 60 *1000)
+//                .build();
+//
+//        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+//        int resultCode = jobScheduler.schedule(info);
+//        if(resultCode == JobScheduler.RESULT_SUCCESS){
+//            Log.d(TAG, "Job Scheduled(Activity)");
+//        }
+//        else{
+//            Log.d(TAG, "Job Scheduling failed");
+//        }
+//    }
+//
+//    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+//    public void cancelJob(View view) {
+//        JobScheduler jobScheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
+//        jobScheduler.cancel(123);
+//        Log.d(TAG, "Job Cancelled");
+//
+//    }
 }

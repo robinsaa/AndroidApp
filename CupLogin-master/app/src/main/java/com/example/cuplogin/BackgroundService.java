@@ -25,12 +25,13 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class BackgroundService extends JobService {
 
-    private static final String TAG = "ExampleJobService";
+    private static final String TAG = "JobService";
     private boolean jobCancelled = false;
     String CAFE_ID,USER_TYPE;
 
@@ -48,9 +49,11 @@ public class BackgroundService extends JobService {
             @Override
             public void run() {
                 if(USER_TYPE.equals("cafe")) {
+                    Log.d(TAG, "On job start Sales Count " + mSales.size());
                     new SendBatchSalesRecords().execute();
                 }
                 else if(USER_TYPE.equals("dishwasher")) {
+                    Log.d(TAG, "On job start Return Count " + mReturns.size());
                     new SendBatchReturnRecords().execute();
                 }
 
@@ -93,22 +96,7 @@ public class BackgroundService extends JobService {
         mReturns = mDb.appDao().getAllReturns();
 
 
-//            if (mSales.size() > 10) {
-//                //Do the needful
-//            } else {
-//                Log.d(TAG, "User: Job cancelled as there are less than 10 records");
-//                onStopJob(job);
-//            }
         doBackgroundWork(job);
-
-
-//            mReturns = mDb.appDao().getAllReturns();
-//            if (mReturns.size() > 10) {
-//               //Do the needful
-//            } else {
-//                Log.d(TAG, "Return: Job cancelled as there are less than 10 records");
-//                onStopJob(job);
-//            }
 
         return true;
     }
@@ -138,12 +126,12 @@ public class BackgroundService extends JobService {
                 //add HTTP headers
                 conn.setRequestProperty("Content-Type", "application/json");
                 //Send the POST out
-                Log.d("Data", strJsonData);
+                Log.d(TAG, strJsonData);
                 PrintWriter out = new PrintWriter(conn.getOutputStream());
                 out.print(strJsonData);
                 out.close();
                 responseCode = Integer.valueOf(conn.getResponseCode()).toString();
-                Log.i("RESPONSE", responseCode);
+                Log.i(TAG, responseCode);
                 if(responseCode.equals("201") || responseCode.equals("200")){
                     deleteSaleRecordById(mSalesId);
                 }
@@ -172,14 +160,15 @@ public class BackgroundService extends JobService {
             BatchSalesApiBody batchSalesApiBody = new BatchSalesApiBody(saleApiBody);
             Gson gson = new Gson();
             String json = gson.toJson(batchSalesApiBody.getSaleApiBodyList());
-//            Production URL
-            String fullRestApiUrl = "***REMOVED***";
 
-//            Testing URL
+//            Production URL
 //            String fullRestApiUrl = "***REMOVED***";
 
-            Log.d("Batch IDS", json);
-            Log.d("Batch IDS", String.valueOf(mSalesId.length));
+//            Testing URL
+            String fullRestApiUrl = "***REMOVED***";
+
+            Log.d(TAG, json);
+            Log.d(TAG, "Before sending to api sales array size" + String.valueOf(mSalesId.length));
 
 
             httpConnectionPostRequest(fullRestApiUrl, json ,mSalesId);
@@ -260,10 +249,10 @@ public class BackgroundService extends JobService {
             String json = gson.toJson(batchReturnApiBody.getReturnApiBodyList());
 
 //            Production URL
-            String fullRestApiUrl = "***REMOVED***";
+//            String fullRestApiUrl = "***REMOVED***";
 
 //            Testing URL
-//            String fullRestApiUrl = "***REMOVED***";
+            String fullRestApiUrl = "***REMOVED***";
 
             Log.d(TAG, json);
             Log.d(TAG, String.valueOf(mReturnsId.length));
@@ -276,11 +265,15 @@ public class BackgroundService extends JobService {
 
         public void deleteReturnRecordById(int[] mReturnsId) {
             Log.d(TAG,"In delete Return Record");
-            for(int i=0; i<mReturnsId.length; i++) {
+            Log.d(TAG,"No of cups to be deleted :" + mReturnsId.length);
+            Log.d(TAG,"Cup ID's for deletion :" + Arrays.toString(mReturnsId));
+
+            for(int i=0; i< mReturnsId.length; i++) {
                 Return_Record returnRecord = mDb.appDao().findReturnById(mReturnsId[i]);
                 mDb.appDao().deleteReturn(returnRecord);
             }
-            Log.d(TAG, String.valueOf(mDb.appDao().getAllReturns().size()));
+
+            Log.d(TAG, "After deletion (new call to DB) count : " + String.valueOf(mDb.appDao().getAllReturns().size()));
             mReturns.clear();
         }
 
