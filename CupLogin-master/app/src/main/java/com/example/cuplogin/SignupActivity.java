@@ -22,6 +22,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.util.HashMap;
 import java.util.Objects;
 
+// Not used at the moment
 public class SignupActivity extends AppCompatActivity {
 
     EditText emailET,passwordET,usernameET,userTypeET;
