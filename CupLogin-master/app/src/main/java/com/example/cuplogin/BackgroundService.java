@@ -40,9 +40,6 @@ public class BackgroundService extends JobService {
     static List<Sale> mSales = new ArrayList<>();
     static List<Return_Record> mReturns = new ArrayList<>();
 
-
-
-
     private void doBackgroundWork(final JobParameters params){
 
         new Thread(new Runnable() {
@@ -162,10 +159,10 @@ public class BackgroundService extends JobService {
             String json = gson.toJson(batchSalesApiBody.getSaleApiBodyList());
 
 //            Production URL
-//            String fullRestApiUrl = "***REMOVED***";
+//            String fullRestApiUrl = BuildConfig.PROD_SALE_URL;
 
 //            Testing URL
-            String fullRestApiUrl = "***REMOVED***";
+            String fullRestApiUrl = BuildConfig.TEST_SALE_URL;
 
             Log.d(TAG, json);
             Log.d(TAG, "Before sending to api sales array size" + String.valueOf(mSalesId.length));
@@ -249,10 +246,10 @@ public class BackgroundService extends JobService {
             String json = gson.toJson(batchReturnApiBody.getReturnApiBodyList());
 
 //            Production URL
-//            String fullRestApiUrl = "***REMOVED***";
+//            String fullRestApiUrl = BuildConfig.PROD_RETURN_URL;
 
 //            Testing URL
-            String fullRestApiUrl = "***REMOVED***";
+            String fullRestApiUrl = BuildConfig.TEST_RETURN_URL;
 
             Log.d(TAG, json);
             Log.d(TAG, String.valueOf(mReturnsId.length));

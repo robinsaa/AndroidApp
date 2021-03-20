@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+def apiDataPropertiesFile = rootProject.file("apidata.properties")
+def apiDataProperties = new Properties()
+apiDataProperties.load(new FileInputStream(apiDataPropertiesFile))
+
 android {
     compileSdkVersion 28
     defaultConfig {
@@ -9,6 +13,13 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "PROD_RETURN_URL", apiDataProperties['API_PROD_BASE_RETURN_URL'])
+        buildConfigField("String", "PROD_SALE_URL", apiDataProperties['API_PROD_BASE_SALE_URL'])
+        buildConfigField("String", "TEST_RETURN_URL", apiDataProperties['API_TEST_BASE_RETURN_URL'])
+        buildConfigField("String", "TEST_SALE_URL", apiDataProperties['API_TEST_BASE_SALE_URL'])
+        buildConfigField("String", "BASE_URL", apiDataProperties['API_BASE_URL'])
+
     }
     buildTypes {
         release {

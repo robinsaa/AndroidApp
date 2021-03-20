@@ -155,7 +155,6 @@ public class MainActivity extends AppCompatActivity {
                             userStatusTV.setVisibility(View.VISIBLE);
                             if (fullName != null) {
                                 userStatusTV.setText("Hi, " + fullName);
-
                             } else {
                                 // No user is signed in
                                 userStatusTV.setText("Error Loading Profile");
