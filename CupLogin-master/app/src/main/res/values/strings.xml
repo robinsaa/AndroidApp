@@ -11,7 +11,7 @@
     <string name="new_pass">New Password</string>
     <string name="title_activity_profile">Firebase</string>
     <string name="title_activity_login">Sign in</string>
-    <string name="hint_email">Email</string>
+    <string name="hint_username">Username</string>
     <string name="hint_password">Password</string>
     <string name="hint_name">Fullname</string>
     <string name="btn_login">LOGIN</string>
@@ -24,8 +24,11 @@
     <string name="hint_new_email">New Email</string>
     <string name="btn_change">Change</string>
     <string name="btn_send">Send</string>
+    <string name="text_size">22</string>
+    <string name="blank"></string>
     <string name="btn_remove">Remove</string>
     <string name="btn_sign_out">Sign Out</string>
     <string name="lbl_forgot_password">Forgot password?</string>
     <string name="forgot_password_msg">We just need your registered Email Id to sent you password reset instructions.</string>
+    <string name="title_activity_show_database">ShowDatabaseActivity</string>
 </resources>

@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+def apiDataPropertiesFile = rootProject.file("apidata.properties")
+def apiDataProperties = new Properties()
+apiDataProperties.load(new FileInputStream(apiDataPropertiesFile))
+
 android {
     compileSdkVersion 28
     defaultConfig {
@@ -9,6 +13,13 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "PROD_RETURN_URL", apiDataProperties['API_PROD_BASE_RETURN_URL'])
+        buildConfigField("String", "PROD_SALE_URL", apiDataProperties['API_PROD_BASE_SALE_URL'])
+        buildConfigField("String", "TEST_RETURN_URL", apiDataProperties['API_TEST_BASE_RETURN_URL'])
+        buildConfigField("String", "TEST_SALE_URL", apiDataProperties['API_TEST_BASE_SALE_URL'])
+        buildConfigField("String", "BASE_URL", apiDataProperties['API_BASE_URL'])
+
     }
     buildTypes {
         release {
@@ -26,11 +37,17 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+
+    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
+
     implementation 'com.google.firebase:firebase-analytics:17.2.0'
     implementation 'com.google.firebase:firebase-auth:17.0.0'
     implementation 'com.google.firebase:firebase-database:17.0.0'
+
     implementation 'com.google.android.gms:play-services-vision:18.0.0'
     implementation 'com.google.android.material:material:1.1.0-alpha10'
+    implementation 'com.firebase:firebase-jobdispatcher:0.8.6'
 
     implementation 'com.google.code.gson:gson:2.8.2'
     implementation "androidx.room:room-runtime:$room_version"
